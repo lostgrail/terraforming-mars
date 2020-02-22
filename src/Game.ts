@@ -141,7 +141,7 @@ export class Game {
             throw new Error("No corporation card dealt for player");
           }
           player.dealtCorporationCards = [firstCard, secondCard];
-          player.setWaitingFor(this.pickCorporationCard(player));
+          player.setWaitingFor(this.pickCorporationCard(player), () => {});
         } else {
           this.playCorporationCard(player, new BeginnerCorporation());
         }
@@ -337,7 +337,7 @@ export class Game {
       return result;
     }
 
-    private hasPassedThisActionPhase(player: Player): boolean {
+    public hasPassedThisActionPhase(player: Player): boolean {
       return this.passedPlayers.has(player);
     }
 
@@ -478,7 +478,6 @@ export class Game {
 
     public playerHasPassed(player: Player): void {
       this.passedPlayers.add(player);
-      this.playerIsFinishedTakingActions();
     }
 
     private hasResearched(player: Player): boolean {
@@ -586,7 +585,9 @@ export class Game {
       if (this.interrupts.length > 0) {
         let interrupt = this.interrupts.shift();
         if (interrupt !== undefined && interrupt.playerInput !== undefined) {
-          interrupt.player.setWaitingFor(interrupt.playerInput);
+          interrupt.player.setWaitingFor(interrupt.playerInput, () => {
+            this.playerIsFinishedTakingActions();
+          });
           return;
         }
       }
@@ -737,7 +738,7 @@ export class Game {
     }
 
     public increaseOxygenLevel(
-        player: Player, steps: 1 | 2): SelectSpace | undefined {
+        player: Player, steps: 1 | 2): undefined {
       if (this.oxygenLevel >= constants.MAX_OXYGEN_LEVEL) {
         return undefined;
       }
@@ -797,13 +798,13 @@ export class Game {
   }
 
     public increaseTemperature(
-        player: Player, steps: 1 | 2 | 3): SelectSpace | undefined {
+        player: Player, steps: 1 | 2 | 3): undefined {
       if (this.temperature >= constants.MAX_TEMPERATURE) {
         return undefined;
       }
       if (steps > 1 && this.temperature + 2 * steps > constants.MAX_TEMPERATURE) {
         steps = (steps == 3) ? 2 : 1; // typing disallows decrement
-        return this.increaseTemperature(player, steps);
+        this.increaseTemperature(player, steps);
       }
       this.temperature += 2 * steps;
       player.terraformRating += steps;
@@ -826,14 +827,17 @@ export class Game {
           (steps === 3 && this.temperature === 4)
         ) && this.board.getOceansOnBoard() < constants.MAX_OCEAN_TILES
       ) {
-        return new SelectSpace(
-            'Select space for ocean from temperature increase',
-            this.board.getAvailableSpacesForOcean(player),
-            (space: ISpace) => {
-              this.addOceanTile(player, space.id);
-              return undefined;
-            }
-        );
+        this.interrupts.push({
+            player: player,
+            playerInput: new SelectSpace(
+                'Select space for ocean from temperature increase',
+                this.board.getAvailableSpacesForOcean(player),
+                (space: ISpace) => {
+                    this.addOceanTile(player, space.id);
+                    return undefined;
+                }
+            )
+        });
       }
       return undefined;
     }
@@ -902,16 +906,10 @@ export class Game {
             }
           );
 
-
-          selectOcean.onend = () => { 
-            player.takeAction(this);
-          }
-
-          let interrupt = {
+          this.interrupts.push({
             player: player,
             playerInput: selectOcean
-          };
-          this.interrupts.push(interrupt);
+          });
       }
 
       // Land claim a player can claim land for themselves
@@ -971,7 +969,7 @@ export class Game {
     }
     public addGreenery(
         player: Player, spaceId: string,
-        spaceType: SpaceType = SpaceType.LAND): SelectSpace | undefined {
+        spaceType: SpaceType = SpaceType.LAND): undefined {
       this.addTile(player, spaceType, this.getSpace(spaceId), {
         tileType: TileType.GREENERY
       });

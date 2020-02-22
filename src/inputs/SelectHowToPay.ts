@@ -6,7 +6,6 @@ import { SelectSpace } from "./SelectSpace";
 
 export class SelectHowToPay implements PlayerInput {
     public inputType: PlayerInputTypes = PlayerInputTypes.SELECT_HOW_TO_PAY;
-    public onend?: () => void;  
     constructor(
         public title: string,
         public canUseSteel: boolean,
