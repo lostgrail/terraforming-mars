@@ -126,7 +126,9 @@ describe("Game", function () {
         game.venusNextExtension = false;
         game.generation = 4;
         game.playerHasPassed(player);
+        game.playerIsFinishedTakingActions();
         game.playerHasPassed(player2);
+        game.playerIsFinishedTakingActions();
         expect(game.getGeneration()).to.eq(5);
     });    
 
@@ -137,7 +139,9 @@ describe("Game", function () {
         game.venusNextExtension = false;
         game.generation = 2;
         game.playerHasPassed(player);
+        game.playerIsFinishedTakingActions();
         game.playerHasPassed(player2);
+        game.playerIsFinishedTakingActions();
         expect(game.getGeneration()).to.eq(3);
     });
  
@@ -146,16 +150,14 @@ describe("Game", function () {
         const game = new Game("draft_game", [player], player, false, false);
         game.venusNextExtension = false;
         game.playerHasPassed(player);
+        game.playerIsFinishedTakingActions();
         expect(game.getGeneration()).to.eq(2);
     });    
 
     it("Should finish solo game in the end of last generation", function() {
         const player = new Player("temp_test", Color.BLUE, false);
         const game = new Game("solo1", [player], player);
-        game.generation = 14;
-
-        // Pass last turn
-        game.playerHasPassed(player);
+        game.playerIsDoneWithGame(player);
 
         // Now game should be in finished state
         expect(game.phase).to.eq(Phase.END);

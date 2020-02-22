@@ -1454,9 +1454,8 @@ export class Player {
  
       // Prelude cards have to be played first
       if (this.preludeCardsInHand.length > 0) {
-        game.interrupts.push({
-            player: this,
-            playerInput: this.playPreludeCard(game)
+        this.setWaitingFor(this.playPreludeCard(game), () => {
+            this.takeAction(game);
         });
         return;
       }

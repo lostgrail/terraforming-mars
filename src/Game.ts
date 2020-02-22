@@ -800,18 +800,19 @@ export class Game {
     public increaseTemperature(
         player: Player, steps: 1 | 2 | 3): undefined {
       if (this.temperature >= constants.MAX_TEMPERATURE) {
-        return undefined;
+        return;
       }
       if (steps > 1 && this.temperature + 2 * steps > constants.MAX_TEMPERATURE) {
-        steps = (steps == 3) ? 2 : 1; // typing disallows decrement
+        steps = (steps === 3) ? 2 : 1; // typing disallows decrement
         this.increaseTemperature(player, steps);
+        return;
       }
       this.temperature += 2 * steps;
       player.terraformRating += steps;
       // BONUS FOR HEAT PRODUCTION AT -20 and -24
       // BONUS FOR OCEAN TILE AT 0
       if (steps === 3 && this.temperature === -20) {
-        player.setProduction(Resources.HEAT,2);
+        player.setProduction(Resources.HEAT, 2);
       } else if (this.temperature === -24 || this.temperature === -20 ||
             (
               (steps === 2 || steps === 3) &&
